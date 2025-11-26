@@ -1,15 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabaseClient'
 import { apresentacoes, formatarMoeda } from './utils'
+import type { Item } from './ModalEditar'
 
-interface Item {
-  id: number | string
-  descricao: string
-  unidade: string
-  valor_unitario: number
-  quantidade: number
-  [key: string]: unknown
-}
 
 interface HistoricoEntry {
   id?: number | string
