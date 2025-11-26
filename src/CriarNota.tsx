@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
+import type { Nota, Item as DBItem, Database } from './supabaseTypes'
 import { tiposDocumento, apresentacoes } from './utils'
 
 export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
@@ -13,18 +14,14 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
   const [valorTeto, setValorTeto] = useState(0)
 
   // --- ESTADOS DOS ITENS ---
-  type Item = {
+  type NewItem = {
     descricao: string
     quantidade: number
     unidade: string
     valor_unitario: number
-    // campos opcionais quando persistidos
-    id?: number | string
-    nota_id?: number | string
-    [key: string]: unknown
   }
 
-  const [itens, setItens] = useState<Item[]>([])
+  const [itens, setItens] = useState<NewItem[]>([])
   
   // Campos temporários para adicionar um item
   const [descItem, setDescItem] = useState('')
@@ -68,15 +65,17 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
           data_emissao: dataEmissao || null,
           data_validade: dataValidade || null,
           valor_total_teto: valorTeto
-        }])
+        }] as Database['public']['Tables']['notas']['Insert'][] )
         .select()
         .single() // Retorna o objeto criado (com o ID)
+
+      const savedNota = notaSalva as Nota | null
 
       if (erroNota) throw erroNota
 
       // 2. Preparar itens com o ID da nota
       const itensComId = itens.map(i => ({
-        nota_id: notaSalva.id, // Vincula ao pai
+        nota_id: savedNota?.id as number | undefined, // Vincula ao pai
         descricao: i.descricao,
         quantidade: i.quantidade,
         unidade: i.unidade,
@@ -87,7 +86,7 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
       if (itensComId.length > 0) {
         const { error: erroItens } = await supabase
           .from('itens')
-          .insert(itensComId)
+          .insert(itensComId as (Partial<DBItem> & { nota_id?: number | undefined })[])
         
         if (erroItens) throw erroItens
       }

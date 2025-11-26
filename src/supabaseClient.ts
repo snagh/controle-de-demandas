@@ -8,4 +8,5 @@ if (!supabaseUrl || !supabaseKey) {
   console.error('ERRO: Variáveis de ambiente ausentes.')
 }
 
+// Leave client untyped (use explicit casts on queries as needed) to avoid over-strict supabase-js generics
 export const supabase = createClient(supabaseUrl, supabaseKey)

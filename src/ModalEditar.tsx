@@ -1,35 +1,11 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { tiposDocumento } from './utils'
+import type { Nota, Item as DBItem } from './supabaseTypes'
 
-// Definindo o "Contrato" dos dados (Isso elimina os erros de 'any')
-export interface Item {
-  id: number | string
-  descricao: string
-  quantidade: number
-  unidade: string
-  valor_unitario: number
-  [key: string]: unknown
-}
-
-export interface NotaData {
-  id: number
-  numero_ne: string
-  emissor: string
-  tipo_documento: string
-  status_geral: string
-  status_estoque: string | null
-  data_contato_vendedor: string | null
-  previsao_entrega: string | null
-  motivo_rejeicao: string | null
-  
-  // Novos Campos
-  data_emissao: string | null
-  data_validade: string | null
-  valor_total_teto: number
-  data_recebimento?: string | null
-  itens?: Item[]
-}
+// Re-export DB types under the names used elsewhere in the app for compatibility
+export type NotaData = Nota
+export type Item = DBItem
 
 interface ModalProps {
   nota: NotaData // Aqui dizemos que 'nota' segue o contrato acima
@@ -69,10 +45,10 @@ export function ModalEditar({ nota, aoFechar, aoSalvar }: ModalProps) {
           valor_total_teto: valorTeto,
           tipo_documento: tipoDoc,
           motivo_rejeicao: obs
-        })
+        } as import('./supabaseTypes').Database['public']['Tables']['notas']['Update'])
         .eq('id', nota.id) // Garante que só altera ESSA nota
 
-      if (error) throw error
+        if (error) throw error
 
       aoSalvar() // Recarrega a lista no App.tsx
       aoFechar() // Fecha o modal

@@ -6,7 +6,7 @@ import { ControleEntrega } from './ControleEntrega'
 import { formatarMoeda } from './utils'
 
 function App() {
-  const [notas, setNotas] = useState<NotaData[]>([])
+  const [notas, setNotas] = useState<(NotaData & { itens?: Item[] })[]>([])
   const [loading, setLoading] = useState(false)
   
   // Modais
@@ -21,8 +21,14 @@ function App() {
       .select('*, itens (*)')
       .order('created_at', { ascending: false })
 
-    if (error) console.error(error)
-    else setNotas(data || [])
+    if (error) {
+      console.error(error)
+    } else {
+      // Cast seguro para os tipos conhecidos
+      const notasTyped = (data as (NotaData & { itens?: Item[] })[] | null) || []
+      setNotas(notasTyped)
+    }
+
     setLoading(false)
   }
 

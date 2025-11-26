@@ -1,17 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from './supabaseClient'
 import { apresentacoes, formatarMoeda } from './utils'
-import type { Item } from './ModalEditar'
-
-
-interface HistoricoEntry {
-  id?: number | string
-  item_id?: number | string
-  quantidade_entregue: number
-  data_entrega?: string | null
-  motivo_pendencia?: string | null
-  [key: string]: unknown
-}
+import type { Item, HistoricoEntrega, Database } from './supabaseTypes'
 
 interface Props {
   item: Item
@@ -19,7 +9,7 @@ interface Props {
 }
 
 export function ControleEntrega({ item, aoFechar }: Props) {
-  const [historico, setHistorico] = useState<HistoricoEntry[]>([])
+  const [historico, setHistorico] = useState<HistoricoEntrega[]>([])
   const [qtdEntregueHoje, setQtdEntregueHoje] = useState(0)
   const [motivo, setMotivo] = useState('')
   const [loading, setLoading] = useState(false)
@@ -32,7 +22,7 @@ export function ControleEntrega({ item, aoFechar }: Props) {
       .eq('item_id', item.id)
       .order('data_entrega', { ascending: false })
 
-    setHistorico((data as HistoricoEntry[] | null) || [])
+    setHistorico((data as HistoricoEntrega[] | null) || [])
   }, [item.id])
 
   useEffect(() => {
@@ -52,11 +42,13 @@ export function ControleEntrega({ item, aoFechar }: Props) {
     setLoading(true)
     const { error } = await supabase
       .from('historico_entregas')
-      .insert([{
-        item_id: item.id,
-        quantidade_entregue: qtdEntregueHoje,
-        motivo_pendencia: motivo || 'Entrega registrada'
-      }])
+      .insert([
+        {
+          item_id: item.id,
+          quantidade_entregue: qtdEntregueHoje,
+          motivo_pendencia: motivo || 'Entrega registrada'
+        } as Database['public']['Tables']['historico_entregas']['Insert']
+      ])
     
     if (!error) {
       setQtdEntregueHoje(0); setMotivo(''); buscarHistorico()
