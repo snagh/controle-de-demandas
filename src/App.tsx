@@ -1,9 +1,17 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 
+type Nota = {
+  id: number | string
+  numero_ne?: string | null
+  status_geral?: string | null
+  // campos adicionais possíveis — use unknown em vez de any para manter segurança de tipos
+  [key: string]: unknown
+}
+
 function App() {
-  // <any[]> avisa que é uma lista de objetos genéricos
-  const [notas, setNotas] = useState<any[]>([]) 
+  // Evitamos `any` declarando uma interface (type) `Nota` e usando-a no useState
+  const [notas, setNotas] = useState<Nota[]>([])
   const [erro, setErro] = useState<string | null>(null)
 
   useEffect(() => {
