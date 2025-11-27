@@ -16,8 +16,7 @@ export function ControleEntrega({ item, aoFechar }: Props) {
 
   // Busca o histórico assim que mudou o item
   const buscarHistorico = useCallback(async () => {
-    const { data } = await supabase
-      .from('historico_entregas')
+    const { data } = await (supabase.from('historico_entregas') as any)
       .select('*')
       .eq('item_id', item.id)
       .order('data_entrega', { ascending: false })
