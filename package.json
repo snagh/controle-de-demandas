@@ -10,6 +10,7 @@
     "package:win": "electron-builder --win",
     "package:all": "electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "prepare": "husky install",
     "check:no-any": "node ./scripts/checkNoAny.cjs",
     "preview": "vite preview"
   },
@@ -31,6 +32,7 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "typescript": "^5.2.2",
     "vite": "^5.1.6",
+    "husky": "^8.0.0"
     "vite-plugin-electron": "^0.28.6",
     "vite-plugin-electron-renderer": "^0.14.5"
   },
