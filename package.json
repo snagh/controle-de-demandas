@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "supabase:gen-types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID --schema public > src/supabaseTypes.ts",
     "package:win": "electron-builder --win",
     "package:all": "electron-builder",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",

@@ -50,6 +50,7 @@ export async function selectSingle<T extends TableName>(
 }
 
 // Utility to return the raw supabase from() query builder for more complex queries
+// Utility to return the raw supabase from() query builder for more complex queries
 export function from<T extends TableName>(table: T) {
   return (supabase.from(table) as any)
 }
@@ -58,5 +59,7 @@ export default {
   insertRows,
   updateRows,
   selectAll,
-  selectSingle
+  selectSingle,
+  insertAndSelect,
+  from
 }
