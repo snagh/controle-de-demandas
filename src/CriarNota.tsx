@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { supabase } from './supabaseClient'
+// supabase client usage is handled via helpers to centralize type boundary
+import { insertRows, insertAndSelect } from './supabaseHelpers'
 import type { Nota, Database } from './supabaseTypes'
 import { tiposDocumento, apresentacoes } from './utils'
 
@@ -54,8 +55,7 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
     setLoading(true)
     try {
       // 1. Inserir a NOTA
-        const { data: notaSalva, error: erroNota } = await (supabase.from('notas') as any)
-          .insert([{
+        const { data: notaSalva, error: erroNota } = await insertAndSelect('notas', [{
           numero_ne: numero, 
           emissor: emissor, 
           data_recebimento: dataChegada,
@@ -65,8 +65,7 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
           data_validade: dataValidade || null,
           valor_total_teto: valorTeto
           }] as Database['public']['Tables']['notas']['Insert'][] )
-        .select()
-        .single() // Retorna o objeto criado (com o ID)
+        // insertAndSelect already performs select().single() inside the helper
 
       const savedNota = notaSalva as Nota | null
 
@@ -83,8 +82,7 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
 
       // 3. Inserir ITENS
       if (itensComId.length > 0) {
-        const { error: erroItens } = await (supabase.from('itens') as any)
-          .insert(itensComId as Database['public']['Tables']['itens']['Insert'][])
+        const { error: erroItens } = await insertRows('itens', itensComId)
         
         if (erroItens) throw erroItens
       }

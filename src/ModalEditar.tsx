@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { supabase } from './supabaseClient'
+// Using typed helpers for supabase interactions
+import { updateRows } from './supabaseHelpers'
 import { tiposDocumento } from './utils'
 import type { Nota, Item as DBItem, Database } from './supabaseTypes'
 
@@ -34,8 +35,7 @@ export function ModalEditar({ nota, aoFechar, aoSalvar }: ModalProps) {
   async function salvarAlteracoes() {
     setLoading(true)
     try {
-      const { error } = await (supabase.from('notas') as any)
-        .update({
+      const { error } = await updateRows('notas', {
           status_geral: statusGeral,
           status_estoque: statusEstoque || null, // Se estiver vazio, salva null no banco
           data_contato_vendedor: dataContato || null,
@@ -44,8 +44,7 @@ export function ModalEditar({ nota, aoFechar, aoSalvar }: ModalProps) {
           valor_total_teto: valorTeto,
           tipo_documento: tipoDoc,
           motivo_rejeicao: obs
-        } as Database['public']['Tables']['notas']['Update'])
-        .eq('id', nota.id) // Garante que só altera ESSA nota
+        } as Database['public']['Tables']['notas']['Update'], 'id', nota.id)
 
         if (error) throw error
 

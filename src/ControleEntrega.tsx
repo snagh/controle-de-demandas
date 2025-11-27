@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from './supabaseClient'
+// Using typed helpers for supabase interactions
+import { from as supaFrom, insertRows } from './supabaseHelpers'
 import { apresentacoes, formatarMoeda } from './utils'
 import type { Item, HistoricoEntrega, Database } from './supabaseTypes'
 
@@ -16,7 +17,7 @@ export function ControleEntrega({ item, aoFechar }: Props) {
 
   // Busca o histórico assim que mudou o item
   const buscarHistorico = useCallback(async () => {
-    const { data } = await (supabase.from('historico_entregas') as any)
+    const { data } = await supaFrom('historico_entregas')
       .select('*')
       .eq('item_id', item.id)
       .order('data_entrega', { ascending: false })
@@ -39,8 +40,7 @@ export function ControleEntrega({ item, aoFechar }: Props) {
     if (qtdEntregueHoje > saldoRestante) return alert('Quantidade maior que o pendente!')
     
     setLoading(true)
-    const { error } = await (supabase.from('historico_entregas') as any)
-      .insert([{
+    const { error } = await insertRows('historico_entregas', [{
         item_id: item.id,
         quantidade_entregue: qtdEntregueHoje,
         motivo_pendencia: motivo || 'Entrega registrada'
