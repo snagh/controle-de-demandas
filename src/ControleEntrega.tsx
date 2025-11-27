@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 // Using typed helpers for supabase interactions
-import { from as supaFrom, insertRows } from './supabaseHelpers'
+import { fromHistorico, insertHistorico } from './supabaseHelpers'
 import { apresentacoes, formatarMoeda } from './utils'
-import type { Item, HistoricoEntrega, Database } from './supabaseTypes'
+import type { Database, Tables } from './supabaseTypes'
+
+type Item = Tables<'itens'>
+type HistoricoEntrega = Tables<'historico_entregas'>
 
 interface Props {
   item: Item
@@ -17,7 +20,7 @@ export function ControleEntrega({ item, aoFechar }: Props) {
 
   // Busca o histórico assim que mudou o item
   const buscarHistorico = useCallback(async () => {
-    const { data } = await supaFrom('historico_entregas')
+    const { data } = await fromHistorico()
       .select('*')
       .eq('item_id', item.id)
       .order('data_entrega', { ascending: false })
@@ -31,8 +34,10 @@ export function ControleEntrega({ item, aoFechar }: Props) {
 
   // Cálculos
   const totalEntregue = historico.reduce((acc, curr) => acc + (Number(curr.quantidade_entregue) || 0), 0)
-  const saldoRestante = (Number(item.quantidade) || 0) - totalEntregue
-  const percentual = Math.min((totalEntregue / item.quantidade) * 100, 100)
+  const totalPedido = Number(item.quantidade) || 0
+  const valorUnit = Number(item.valor_unitario) || 0
+  const saldoRestante = totalPedido - totalEntregue
+  const percentual = Math.min(totalPedido === 0 ? 0 : (totalEntregue / totalPedido) * 100, 100)
   
   // Salva nova entrega
   async function salvarEntrega() {
@@ -40,7 +45,7 @@ export function ControleEntrega({ item, aoFechar }: Props) {
     if (qtdEntregueHoje > saldoRestante) return alert('Quantidade maior que o pendente!')
     
     setLoading(true)
-    const { error } = await insertRows('historico_entregas', [{
+    const { error } = await insertHistorico([{
         item_id: item.id,
         quantidade_entregue: qtdEntregueHoje,
         motivo_pendencia: motivo || 'Entrega registrada'
@@ -66,10 +71,10 @@ export function ControleEntrega({ item, aoFechar }: Props) {
         <div style={{ background: '#f4f6f7', padding: '15px', borderRadius: '8px', marginBottom: '20px' }}>
           <h3 style={{ margin: '0 0 10px 0' }}>{item.descricao}</h3>
           <div style={{ fontSize: '0.9em', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-            <span><strong>Apresentação:</strong> <span title={apresentacoes[item.unidade]} style={{borderBottom:'1px dotted #999', cursor:'help'}}>{item.unidade}</span></span>
-            <span><strong>Valor Unit:</strong> {formatarMoeda(item.valor_unitario)}</span>
-            <span><strong>Total Pedido:</strong> {item.quantidade}</span>
-            <span><strong>Valor Total:</strong> {formatarMoeda(item.quantidade * item.valor_unitario)}</span>
+            <span><strong>Apresentação:</strong> <span title={apresentacoes[item.unidade ?? '']} style={{borderBottom:'1px dotted #999', cursor:'help'}}>{item.unidade ?? ''}</span></span>
+            <span><strong>Valor Unit:</strong> {formatarMoeda(valorUnit)}</span>
+            <span><strong>Total Pedido:</strong> {totalPedido}</span>
+            <span><strong>Valor Total:</strong> {formatarMoeda(totalPedido * valorUnit)}</span>
           </div>
         </div>
 

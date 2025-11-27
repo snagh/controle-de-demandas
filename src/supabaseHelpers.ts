@@ -1,7 +1,7 @@
 import { supabase } from './supabaseClient'
 import type { Database } from './supabaseTypes'
 
-type TableName = keyof Database['public']['Tables']
+// TableName removed - we use per-table helpers below
 
 /**
  * Minimal typed helper for common supabase operations.
@@ -10,56 +10,67 @@ type TableName = keyof Database['public']['Tables']
  * can use strongly-typed payloads without repeating casts and without fighting
  * supabase-js complex overloads everywhere.
  */
-export async function insertRows<T extends TableName>(
-  table: T,
-  rows: Database['public']['Tables'][T]['Insert'][]
+export async function insertNotas(
+  rows: Database['public']['Tables']['notas']['Insert'][]
 ) {
-  return (supabase.from(table) as any).insert(rows)
+  return supabase.from('notas').insert(rows)
 }
 
-export async function insertAndSelect<T extends TableName>(
-  table: T,
-  rows: Database['public']['Tables'][T]['Insert'][]
+export async function insertItens(
+  rows: Database['public']['Tables']['itens']['Insert'][]
+) {
+  return supabase.from('itens').insert(rows)
+}
+
+export async function insertHistorico(
+  rows: Database['public']['Tables']['historico_entregas']['Insert'][]
+) {
+  return supabase.from('historico_entregas').insert(rows)
+}
+
+export async function insertAndSelectNota(
+  rows: Database['public']['Tables']['notas']['Insert'][]
 ) {
   // insert and return select().single() like our previous call sites expect
-  return (supabase.from(table) as any).insert(rows).select().single()
+  return supabase.from('notas').insert(rows).select().single()
 }
 
-export async function updateRows<T extends TableName>(
-  table: T,
-  payload: Database['public']['Tables'][T]['Update'],
-  key: string,
-  value: unknown
+export async function updateNota<
+  K extends keyof Database['public']['Tables']['notas']['Row']
+>(
+  payload: Database['public']['Tables']['notas']['Update'],
+  key: K,
+  value: Database['public']['Tables']['notas']['Row'][K]
 ) {
-  return (supabase.from(table) as any).update(payload).eq(key, value)
+  return supabase.from('notas').update(payload).eq(key as any, value as any)
 }
 
-export async function selectAll<T extends TableName>(
-  table: T,
+export async function selectAllNotas(
   columns = '*'
-): Promise<{ data: Database['public']['Tables'][T]['Row'][] | null; error: any }>{
-  // We still return the raw result object from supabase; callers can narrow as needed.
-  return (supabase.from(table) as any).select(columns)
+): Promise<{ data: Database['public']['Tables']['notas']['Row'][] | null; error: any }>{
+  return supabase.from('notas').select(columns)
 }
 
-export async function selectSingle<T extends TableName>(
-  table: T,
+export async function selectSingleNota(
   columns = '*'
-): Promise<{ data: Database['public']['Tables'][T]['Row'] | null; error: any }>{
-  return (supabase.from(table) as any).select(columns).single()
+): Promise<{ data: Database['public']['Tables']['notas']['Row'] | null; error: any }>{
+  return supabase.from('notas').select(columns).single()
 }
 
 // Utility to return the raw supabase from() query builder for more complex queries
 // Utility to return the raw supabase from() query builder for more complex queries
-export function from<T extends TableName>(table: T) {
-  return (supabase.from(table) as any)
+// Utility to return the raw supabase from() query builder for historico
+export function fromHistorico() {
+  return supabase.from('historico_entregas')
 }
 
 export default {
-  insertRows,
-  updateRows,
-  selectAll,
-  selectSingle,
-  insertAndSelect,
-  from
+  insertNotas,
+  insertItens,
+  insertHistorico,
+  insertAndSelectNota,
+  updateNota,
+  selectAllNotas,
+  selectSingleNota,
+  fromHistorico
 }

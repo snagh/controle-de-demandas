@@ -1,8 +1,11 @@
 import { useState } from 'react'
 // Using typed helpers for supabase interactions
-import { updateRows } from './supabaseHelpers'
+import { updateNota } from './supabaseHelpers'
 import { tiposDocumento } from './utils'
-import type { Nota, Item as DBItem, Database } from './supabaseTypes'
+import type { Database, Tables } from './supabaseTypes'
+
+type Nota = Tables<'notas'>
+type DBItem = Tables<'itens'>
 
 // Re-export DB types under the names used elsewhere in the app for compatibility
 export type NotaData = Nota
@@ -20,30 +23,29 @@ export function ModalEditar({ nota, aoFechar, aoSalvar }: ModalProps) {
   // --- ESTADOS DO FORMULÁRIO ---
   // Inicializamos com o valor que veio do banco OU vazio se for nulo
   const [statusGeral, setStatusGeral] = useState(nota.status_geral || 'PENDENTE')
-  const [statusEstoque, setStatusEstoque] = useState(nota.status_estoque || '')
+  // campos não presentes no schema atual — mantemos localmente apenas
+  const [statusEstoque, setStatusEstoque] = useState('')
   
   // Datas
-  const [dataContato, setDataContato] = useState(nota.data_contato_vendedor || '')
-  const [previsaoEntrega, setPrevisaoEntrega] = useState(nota.previsao_entrega || '')
+  const [dataContato, setDataContato] = useState('')
+  const [previsaoEntrega, setPrevisaoEntrega] = useState('')
   const [dataValidade, setDataValidade] = useState(nota.data_validade || '')
   
   // Financeiro e Detalhes
   const [valorTeto, setValorTeto] = useState(nota.valor_total_teto || 0)
   const [tipoDoc, setTipoDoc] = useState(nota.tipo_documento || 'NOTA DE EMPENHO')
-  const [obs, setObs] = useState(nota.motivo_rejeicao || '')
+  const [obs, setObs] = useState('')
 
   async function salvarAlteracoes() {
     setLoading(true)
     try {
-      const { error } = await updateRows('notas', {
+          const { error } = await updateNota({
           status_geral: statusGeral,
-          status_estoque: statusEstoque || null, // Se estiver vazio, salva null no banco
-          data_contato_vendedor: dataContato || null,
-          previsao_entrega: previsaoEntrega || null,
+            // status_estoque, data_contato_vendedor e previsao_entrega não existem no schema atual
           data_validade: dataValidade || null,
           valor_total_teto: valorTeto,
           tipo_documento: tipoDoc,
-          motivo_rejeicao: obs
+            // motivo_rejeicao não existe no schema atual
         } as Database['public']['Tables']['notas']['Update'], 'id', nota.id)
 
         if (error) throw error

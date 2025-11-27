@@ -1,7 +1,9 @@
 import { useState } from 'react'
 // supabase client usage is handled via helpers to centralize type boundary
-import { insertRows, insertAndSelect } from './supabaseHelpers'
-import type { Nota, Database } from './supabaseTypes'
+import { insertItens, insertAndSelectNota } from './supabaseHelpers'
+import type { Database, Tables } from './supabaseTypes'
+
+type Nota = Tables<'notas'>
 import { tiposDocumento, apresentacoes } from './utils'
 
 export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
@@ -55,7 +57,7 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
     setLoading(true)
     try {
       // 1. Inserir a NOTA
-        const { data: notaSalva, error: erroNota } = await insertAndSelect('notas', [{
+        const { data: notaSalva, error: erroNota } = await insertAndSelectNota([{
           numero_ne: numero, 
           emissor: emissor, 
           data_recebimento: dataChegada,
@@ -82,7 +84,7 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
 
       // 3. Inserir ITENS
       if (itensComId.length > 0) {
-        const { error: erroItens } = await insertRows('itens', itensComId)
+        const { error: erroItens } = await insertItens(itensComId)
         
         if (erroItens) throw erroItens
       }
