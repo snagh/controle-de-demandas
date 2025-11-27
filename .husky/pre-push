@@ -1,0 +1,6 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Pre-push: re-check no any + lint to prevent pushing problems
+npm run check:no-any
+npm run lint

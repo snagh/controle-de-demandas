@@ -27,3 +27,15 @@ Notes and troubleshooting
 
 - If a commit fails locally because of linting or `check:no-any`, fix the reported issues and try again.
 - CI can run the same commands in your pipeline; it's a good practice to add `npm run check:no-any` and `npm run lint` to your CI steps.
+
+4. (Optional) Enable a pre-push hook locally
+
+   We added a pre-push hook that runs the same checks as pre-commit to help catch issues before pushing.
+
+   To enable it (after `npm run prepare` is already executed), you don't need additional setup — it's already committed to the repo as `.husky/pre-push` and will be active for your local repo.
+
+   If you want to disable the push hook locally for a single push, run:
+
+   ```bash
+   git push --no-verify
+   ```
