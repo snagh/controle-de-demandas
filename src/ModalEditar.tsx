@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
 import { tiposDocumento } from './utils'
-import type { Nota, Item as DBItem } from './supabaseTypes'
+import type { Nota, Item as DBItem, Database } from './supabaseTypes'
 
 // Re-export DB types under the names used elsewhere in the app for compatibility
 export type NotaData = Nota
@@ -36,7 +36,7 @@ export function ModalEditar({ nota, aoFechar, aoSalvar }: ModalProps) {
     try {
       const { error } = await supabase
         .from('notas')
-        .update({
+        .update<Database['public']['Tables']['notas']['Update']>({
           status_geral: statusGeral,
           status_estoque: statusEstoque || null, // Se estiver vazio, salva null no banco
           data_contato_vendedor: dataContato || null,
@@ -45,7 +45,7 @@ export function ModalEditar({ nota, aoFechar, aoSalvar }: ModalProps) {
           valor_total_teto: valorTeto,
           tipo_documento: tipoDoc,
           motivo_rejeicao: obs
-        } as import('./supabaseTypes').Database['public']['Tables']['notas']['Update'])
+        })
         .eq('id', nota.id) // Garante que só altera ESSA nota
 
         if (error) throw error

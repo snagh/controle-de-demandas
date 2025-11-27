@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from './supabaseClient'
-import type { Nota, Item as DBItem, Database } from './supabaseTypes'
+import type { Nota, Database } from './supabaseTypes'
 import { tiposDocumento, apresentacoes } from './utils'
 
 export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
@@ -56,7 +56,7 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
       // 1. Inserir a NOTA
       const { data: notaSalva, error: erroNota } = await supabase
         .from('notas')
-        .insert([{ 
+          .insert<Database['public']['Tables']['notas']['Insert']>([{ 
           numero_ne: numero, 
           emissor: emissor, 
           data_recebimento: dataChegada,
@@ -85,8 +85,8 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
       // 3. Inserir ITENS
       if (itensComId.length > 0) {
         const { error: erroItens } = await supabase
-          .from('itens')
-          .insert(itensComId as (Partial<DBItem> & { nota_id?: number | undefined })[])
+           .from('itens')
+          .insert<Database['public']['Tables']['itens']['Insert']>(itensComId as Database['public']['Tables']['itens']['Insert'][])
         
         if (erroItens) throw erroItens
       }

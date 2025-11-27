@@ -9,4 +9,6 @@ if (!supabaseUrl || !supabaseKey) {
 }
 
 // Leave client untyped (use explicit casts on queries as needed) to avoid over-strict supabase-js generics
+// Keep the client untyped for now to avoid constraining library generics.
+// For stricter typing we can re-enable createClient<Database> after aligning all query shapes.
 export const supabase = createClient(supabaseUrl, supabaseKey)
