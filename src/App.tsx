@@ -1,21 +1,29 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './supabaseClient'
 import { CriarNota } from './CriarNota'
-import { ModalEditar, NotaData, Item } from './ModalEditar'
+import { ModalEditar } from './ModalEditar'
 import { ControleEntrega } from './ControleEntrega'
 import { formatarMoeda } from './utils'
+import type { Tables } from './supabaseTypes'
+
+// Tipos auxiliares
+type Nota = Tables<'notas'>
+type Item = Tables<'itens'>
+
+// Tipo Composto (Nota + Itens)
+type NotaComItens = Nota & { itens: Item[] }
 
 function App() {
-  const [notas, setNotas] = useState<(NotaData & { itens?: Item[] })[]>([])
+  const [notas, setNotas] = useState<NotaComItens[]>([])
   const [loading, setLoading] = useState(false)
+  const [busca, setBusca] = useState('') // Estado da busca
   
   // Modais
-  const [notaSelecionada, setNotaSelecionada] = useState<NotaData | null>(null)
+  const [notaSelecionada, setNotaSelecionada] = useState<Nota | null>(null)
   const [itemParaGerenciar, setItemParaGerenciar] = useState<Item | null>(null)
 
   async function buscarNotas() {
     setLoading(true)
-    // Traz nota + itens ordenados por criação
     const { data, error } = await supabase
       .from('notas')
       .select('*, itens (*)')
@@ -23,12 +31,11 @@ function App() {
 
     if (error) {
       console.error(error)
+      alert('Erro ao buscar notas')
     } else {
-      // Cast seguro para os tipos conhecidos
-      const notasTyped = (data as (NotaData & { itens?: Item[] })[] | null) || []
-      setNotas(notasTyped)
+      // O Supabase retorna os itens dentro da nota, precisamos avisar o TS disso
+      setNotas((data as unknown) as NotaComItens[])
     }
-
     setLoading(false)
   }
 
@@ -36,14 +43,24 @@ function App() {
     buscarNotas()
   }, [])
 
+  // Lógica de Filtro (Busca Local)
+  const notasFiltradas = notas.filter(nota => {
+    const termo = busca.toLowerCase()
+    return (
+      nota.numero_ne.toLowerCase().includes(termo) ||
+      (nota.emissor && nota.emissor.toLowerCase().includes(termo)) ||
+      (nota.status_geral && nota.status_geral.toLowerCase().includes(termo)) ||
+      (nota.tipo_documento && nota.tipo_documento.toLowerCase().includes(termo))
+    )
+  })
+
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px', fontFamily: 'Segoe UI, Arial, sans-serif', color: '#333' }}>
-      <h1 style={{ textAlign: 'center', color: '#2c3e50' }}>Gestão de Empenhos e Estoque</h1>
+      <h1 style={{ textAlign: 'center', color: '#2c3e50' }}>Gestão de Empenhos</h1>
 
-      {/* COMPONENTE DE CADASTRO */}
       <CriarNota aoSalvar={buscarNotas} />
 
-      {/* MODAIS (Só aparecem se tiver algo selecionado) */}
+      {/* MODAIS */}
       {notaSelecionada && (
         <ModalEditar 
           nota={notaSelecionada} 
@@ -61,14 +78,31 @@ function App() {
 
       <hr style={{ margin: '30px 0', border: '0', borderTop: '1px solid #ccc' }} />
 
-      {/* LISTAGEM */}
       <h2 style={{ color: '#34495e' }}>📋 Documentos Lançados</h2>
+      
+      {/* BARRA DE BUSCA */}
+      <div style={{ marginBottom: '20px' }}>
+        <input 
+          type="text" 
+          placeholder="🔍 Buscar por NE, Fornecedor ou Status..." 
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+          style={{ width: '100%', padding: '12px', fontSize: '1.1em', borderRadius: '8px', border: '1px solid #ccc' }}
+        />
+      </div>
+
       {loading && <p>Carregando...</p>}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        {notas.map((nota) => {
-          // Cálculo Financeiro Visual (Teto vs Pedido)
-          const totalItens = nota.itens?.reduce((acc: number, item: Item) => acc + (Number(item.quantidade) * Number(item.valor_unitario)), 0) || 0
+        {notasFiltradas.length === 0 && !loading && (
+          <p style={{ textAlign: 'center', color: '#999' }}>Nenhum documento encontrado.</p>
+        )}
+
+        {notasFiltradas.map((nota) => {
+          // Cálculo Financeiro
+          const totalItens = nota.itens?.reduce((acc, item) => 
+            acc + ((item.quantidade ?? 0) * (item.valor_unitario ?? 0)), 0) || 0
+          
           const saldoFinanceiro = (nota.valor_total_teto || 0) - totalItens
 
           return (
@@ -82,7 +116,7 @@ function App() {
                 boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
               }}
             >
-              {/* CABEÇALHO DO CARD (Clicável para Editar Nota) */}
+              {/* CABEÇALHO */}
               <div 
                 onClick={() => setNotaSelecionada(nota)}
                 style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '10px' }}
@@ -101,7 +135,7 @@ function App() {
                     {nota.status_geral}
                   </span>
                   <div style={{ marginTop: '5px', fontSize: '0.85em' }}>
-                    Chegada: {nota.data_recebimento ? new Date(nota.data_recebimento).toLocaleDateString() : '-'}
+                     Chegada: {nota.data_recebimento ? new Date(nota.data_recebimento).toLocaleDateString() : '-'}
                   </div>
                 </div>
               </div>
@@ -111,22 +145,22 @@ function App() {
                 <span><strong>Teto:</strong> {formatarMoeda(nota.valor_total_teto || 0)}</span>
                 <span><strong>Total Itens:</strong> {formatarMoeda(totalItens)}</span>
                 <span style={{ color: saldoFinanceiro < 0 ? 'red' : 'green' }}>
-                  <strong>Saldo Disponível:</strong> {formatarMoeda(saldoFinanceiro)}
+                  <strong>Saldo:</strong> {formatarMoeda(saldoFinanceiro)}
                 </span>
               </div>
 
-              {/* LISTA DE ITENS (Clicável para Controle Logístico) */}
+              {/* LISTA DE ITENS */}
               <div style={{ fontSize: '0.9em' }}>
                 <strong>Itens do Documento:</strong>
                 <ul style={{ margin: '10px 0 0 0', padding: 0, listStyle: 'none' }}>
-                  {nota.itens?.map((item: Item) => (
+                  {nota.itens?.map((item) => (
                     <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', borderBottom: '1px solid #f4f4f4' }}>
                       <span>
                         <span style={{ fontWeight: 'bold', color: '#2c3e50' }}>{item.quantidade} {item.unidade}</span> - {item.descricao}
                       </span>
                       <button 
                         onClick={(e) => {
-                          e.stopPropagation() // Não abre a nota, só o item
+                          e.stopPropagation()
                           setItemParaGerenciar(item)
                         }}
                         style={{ padding: '5px 10px', background: '#3498db', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.85em' }}

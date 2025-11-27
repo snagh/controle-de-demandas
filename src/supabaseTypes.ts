@@ -86,40 +86,55 @@ export type Database = {
       }
       notas: {
         Row: {
-          created_at: string | null
-          data_emissao: string | null
-          data_recebimento: string | null
-          data_validade: string | null
-          emissor: string | null
           id: number
+          created_at: string | null
           numero_ne: string
+          emissor: string | null
+          data_recebimento: string | null
           status_geral: string | null
           tipo_documento: string | null
+          data_emissao: string | null
+          data_validade: string | null
           valor_total_teto: number | null
+          // NOVOS CAMPOS ADICIONADOS:
+          status_estoque: string | null
+          data_contato_vendedor: string | null
+          previsao_entrega: string | null
+          motivo_rejeicao: string | null
         }
         Insert: {
-          created_at?: string | null
-          data_emissao?: string | null
-          data_recebimento?: string | null
-          data_validade?: string | null
-          emissor?: string | null
           id?: number
+          created_at?: string | null
           numero_ne: string
+          emissor?: string | null
+          data_recebimento?: string | null
           status_geral?: string | null
           tipo_documento?: string | null
+          data_emissao?: string | null
+          data_validade?: string | null
           valor_total_teto?: number | null
+          // NOVOS CAMPOS ADICIONADOS:
+          status_estoque?: string | null
+          data_contato_vendedor?: string | null
+          previsao_entrega?: string | null
+          motivo_rejeicao?: string | null
         }
         Update: {
-          created_at?: string | null
-          data_emissao?: string | null
-          data_recebimento?: string | null
-          data_validade?: string | null
-          emissor?: string | null
           id?: number
+          created_at?: string | null
           numero_ne?: string
+          emissor?: string | null
+          data_recebimento?: string | null
           status_geral?: string | null
           tipo_documento?: string | null
+          data_emissao?: string | null
+          data_validade?: string | null
           valor_total_teto?: number | null
+          // NOVOS CAMPOS ADICIONADOS:
+          status_estoque?: string | null
+          data_contato_vendedor?: string | null
+          previsao_entrega?: string | null
+          motivo_rejeicao?: string | null
         }
         Relationships: []
       }

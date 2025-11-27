@@ -1,18 +1,13 @@
 import { useState } from 'react'
-// Using typed helpers for supabase interactions
 import { updateNota } from './supabaseHelpers'
 import { tiposDocumento } from './utils'
 import type { Database, Tables } from './supabaseTypes'
 
+// Tipagem oficial vinda do banco
 type Nota = Tables<'notas'>
-type DBItem = Tables<'itens'>
-
-// Re-export DB types under the names used elsewhere in the app for compatibility
-export type NotaData = Nota
-export type Item = DBItem
 
 interface ModalProps {
-  nota: NotaData // Aqui dizemos que 'nota' segue o contrato acima
+  nota: Nota
   aoFechar: () => void
   aoSalvar: () => void
 }
@@ -21,45 +16,45 @@ export function ModalEditar({ nota, aoFechar, aoSalvar }: ModalProps) {
   const [loading, setLoading] = useState(false)
   
   // --- ESTADOS DO FORMULÁRIO ---
-  // Inicializamos com o valor que veio do banco OU vazio se for nulo
+  // Inicializamos com o valor que veio do banco OU vazio se for null
   const [statusGeral, setStatusGeral] = useState(nota.status_geral || 'PENDENTE')
-  // campos não presentes no schema atual — mantemos localmente apenas
-  const [statusEstoque, setStatusEstoque] = useState('')
+  const [statusEstoque, setStatusEstoque] = useState(nota.status_estoque || '')
   
   // Datas
-  const [dataContato, setDataContato] = useState('')
-  const [previsaoEntrega, setPrevisaoEntrega] = useState('')
+  const [dataContato, setDataContato] = useState(nota.data_contato_vendedor || '')
+  const [previsaoEntrega, setPrevisaoEntrega] = useState(nota.previsao_entrega || '')
   const [dataValidade, setDataValidade] = useState(nota.data_validade || '')
   
   // Financeiro e Detalhes
   const [valorTeto, setValorTeto] = useState(nota.valor_total_teto || 0)
   const [tipoDoc, setTipoDoc] = useState(nota.tipo_documento || 'NOTA DE EMPENHO')
-  const [obs, setObs] = useState('')
+  const [obs, setObs] = useState(nota.motivo_rejeicao || '')
 
   async function salvarAlteracoes() {
     setLoading(true)
     try {
-          const { error } = await updateNota({
-          status_geral: statusGeral,
-            // status_estoque, data_contato_vendedor e previsao_entrega não existem no schema atual
-          data_validade: dataValidade || null,
-          valor_total_teto: valorTeto,
-          tipo_documento: tipoDoc,
-            // motivo_rejeicao não existe no schema atual
-        } as Database['public']['Tables']['notas']['Update'], 'id', nota.id)
+      // Agora o TypeScript sabe que esses campos existem!
+      const payload: Database['public']['Tables']['notas']['Update'] = {
+        status_geral: statusGeral,
+        status_estoque: statusEstoque || null,
+        data_contato_vendedor: dataContato || null,
+        previsao_entrega: previsaoEntrega || null,
+        data_validade: dataValidade || null,
+        valor_total_teto: valorTeto,
+        tipo_documento: tipoDoc,
+        motivo_rejeicao: obs
+      }
 
-        if (error) throw error
+      const { error } = await updateNota(payload, 'id', nota.id)
+
+      if (error) throw error
 
       aoSalvar() // Recarrega a lista no App.tsx
       aoFechar() // Fecha o modal
 
     } catch (error: unknown) {
-      // Tratamento de erro seguro no TypeScript
-      if (error instanceof Error) {
-        alert('Erro ao atualizar: ' + error.message)
-      } else {
-        alert('Erro desconhecido ao atualizar.')
-      }
+      const msg = error instanceof Error ? error.message : String(error)
+      alert('Erro ao atualizar: ' + msg)
     } finally {
       setLoading(false)
     }
@@ -69,7 +64,7 @@ export function ModalEditar({ nota, aoFechar, aoSalvar }: ModalProps) {
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center',
-      zIndex: 1000 // Garante que fica em cima de tudo
+      zIndex: 1000
     }}>
       <div style={{ background: 'white', padding: '25px', borderRadius: '10px', width: '600px', maxWidth: '95%', maxHeight: '90vh', overflowY: 'auto' }}>
         
@@ -102,7 +97,7 @@ export function ModalEditar({ nota, aoFechar, aoSalvar }: ModalProps) {
             </div>
           </div>
 
-          {/* BLOCO 2: STATUS DO FLUXO (O mais importante) */}
+          {/* BLOCO 2: STATUS DO FLUXO */}
           <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '8px', border: '1px solid #e9ecef' }}>
             <label style={{fontWeight: 'bold', display: 'block', marginBottom: '5px'}}>Status do Processo</label>
             <select 
