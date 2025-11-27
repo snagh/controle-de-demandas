@@ -34,9 +34,8 @@ export function ModalEditar({ nota, aoFechar, aoSalvar }: ModalProps) {
   async function salvarAlteracoes() {
     setLoading(true)
     try {
-      const { error } = await supabase
-        .from('notas')
-        .update<Database['public']['Tables']['notas']['Update']>({
+      const { error } = await (supabase.from('notas') as any)
+        .update({
           status_geral: statusGeral,
           status_estoque: statusEstoque || null, // Se estiver vazio, salva null no banco
           data_contato_vendedor: dataContato || null,
@@ -45,7 +44,7 @@ export function ModalEditar({ nota, aoFechar, aoSalvar }: ModalProps) {
           valor_total_teto: valorTeto,
           tipo_documento: tipoDoc,
           motivo_rejeicao: obs
-        })
+        } as Database['public']['Tables']['notas']['Update'])
         .eq('id', nota.id) // Garante que só altera ESSA nota
 
         if (error) throw error

@@ -54,9 +54,8 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
     setLoading(true)
     try {
       // 1. Inserir a NOTA
-      const { data: notaSalva, error: erroNota } = await supabase
-        .from('notas')
-          .insert<Database['public']['Tables']['notas']['Insert']>([{ 
+        const { data: notaSalva, error: erroNota } = await (supabase.from('notas') as any)
+          .insert([{
           numero_ne: numero, 
           emissor: emissor, 
           data_recebimento: dataChegada,
@@ -65,7 +64,7 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
           data_emissao: dataEmissao || null,
           data_validade: dataValidade || null,
           valor_total_teto: valorTeto
-        }] as Database['public']['Tables']['notas']['Insert'][] )
+          }] as Database['public']['Tables']['notas']['Insert'][] )
         .select()
         .single() // Retorna o objeto criado (com o ID)
 
@@ -84,9 +83,8 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
 
       // 3. Inserir ITENS
       if (itensComId.length > 0) {
-        const { error: erroItens } = await supabase
-           .from('itens')
-          .insert<Database['public']['Tables']['itens']['Insert']>(itensComId as Database['public']['Tables']['itens']['Insert'][])
+        const { error: erroItens } = await (supabase.from('itens') as any)
+          .insert(itensComId as Database['public']['Tables']['itens']['Insert'][])
         
         if (erroItens) throw erroItens
       }

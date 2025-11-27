@@ -40,15 +40,12 @@ export function ControleEntrega({ item, aoFechar }: Props) {
     if (qtdEntregueHoje > saldoRestante) return alert('Quantidade maior que o pendente!')
     
     setLoading(true)
-    const { error } = await supabase
-      .from('historico_entregas')
-      .insert([
-        {
-          item_id: item.id,
-          quantidade_entregue: qtdEntregueHoje,
-          motivo_pendencia: motivo || 'Entrega registrada'
-        } as Database['public']['Tables']['historico_entregas']['Insert']
-      ])
+    const { error } = await (supabase.from('historico_entregas') as any)
+      .insert([{
+        item_id: item.id,
+        quantidade_entregue: qtdEntregueHoje,
+        motivo_pendencia: motivo || 'Entrega registrada'
+      }] as Database['public']['Tables']['historico_entregas']['Insert'][])
     
     if (!error) {
       setQtdEntregueHoje(0); setMotivo(''); buscarHistorico()
