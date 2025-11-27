@@ -10,9 +10,19 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   plugins: ['react-refresh'],
   rules: {
+    '@typescript-eslint/no-explicit-any': 'error',
     'react-refresh/only-export-components': [
       'warn',
       { allowConstantExport: true },
     ],
   },
+  overrides: [
+    {
+      files: ['src/supabaseHelpers.ts'],
+      rules: {
+        // keep a single controlled boundary for minimal runtime-friendly casts
+        '@typescript-eslint/no-explicit-any': 'off'
+      }
+    }
+  ],
 }
