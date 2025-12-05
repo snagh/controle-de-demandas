@@ -171,8 +171,8 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
                  // Electron specific: get path
                  const file = e.target.files?.[0]
                  if(file) {
-                    const path = 'path' in file ? (file as { path: string }).path : file.name
-                    setArquivo(path)
+                    const f = file as File & { path?: string }
+                    setArquivo(f.path || f.name)
                  }
               }} 
             />
