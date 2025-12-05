@@ -4,7 +4,7 @@ import { insertItens, insertAndSelectNota } from './supabaseHelpers'
 import type { Database, Tables } from './supabaseTypes'
 
 type Nota = Tables<'notas'>
-import { tiposDocumento, apresentacoes } from './utils'
+import { tiposDocumento, apresentacoes, categorias, volumes } from './utils'
 
 export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
   // --- ESTADOS DA CAPA (NOTA) ---
@@ -22,6 +22,8 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
     quantidade: number
     unidade: string
     valor_unitario: number
+    categoria: string
+    volume: string
   }
 
   const [itens, setItens] = useState<NewItem[]>([])
@@ -31,6 +33,13 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
   const [qtdItem, setQtdItem] = useState(1)
   const [unidItem, setUnidItem] = useState('UN')
   const [valorItem, setValorItem] = useState(0)
+  
+  // Novos estados do Item
+  const [catItem, setCatItem] = useState(categorias[0])
+  const [volItem, setVolItem] = useState(volumes[0])
+  
+  // Estado do Arquivo (Caminho)
+  const [arquivo, setArquivo] = useState('')
 
   const [loading, setLoading] = useState(false)
 
@@ -42,7 +51,9 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
       descricao: descItem, 
       quantidade: qtdItem, 
       unidade: unidItem, 
-      valor_unitario: valorItem 
+      valor_unitario: valorItem,
+      categoria: catItem,
+      volume: volItem
     }])
     
     // Limpa campos do item
@@ -65,7 +76,8 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
           tipo_documento: tipoDoc,
           data_emissao: dataEmissao || null,
           data_validade: dataValidade || null,
-          valor_total_teto: valorTeto
+          valor_total_teto: valorTeto,
+          arquivo_caminho: arquivo || null
           }] as Database['public']['Tables']['notas']['Insert'][] )
         // insertAndSelect already performs select().single() inside the helper
 
@@ -79,7 +91,12 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
         descricao: i.descricao,
         quantidade: i.quantidade,
         unidade: i.unidade,
-        valor_unitario: i.valor_unitario
+        valor_unitario: i.valor_unitario,
+        categoria: i.categoria,
+        volume: i.volume,
+        // map existing `unidade` to `apresentacao` as well if needed, or keep separate. 
+        // User asked for "apresentação (ampola...)" which is our `unidade` / `apresentacoes`.
+        apresentacao: i.unidade 
       }))
 
       // 3. Inserir ITENS
@@ -93,7 +110,7 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
       
       // Limpar tudo
       setNumero(''); setEmissor(''); setDataChegada(''); setItens([])
-      setValorTeto(0); setDataEmissao(''); setDataValidade('')
+      setValorTeto(0); setDataEmissao(''); setDataValidade(''); setArquivo('')
       
       // Atualizar lista principal
       aoSalvar()
@@ -108,93 +125,127 @@ export function CriarNota({ aoSalvar }: { aoSalvar: () => void }) {
   }
 
   return (
-    <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', border: '1px solid #ddd', marginBottom: '20px' }}>
-      <h2 style={{ marginTop: 0, color: '#2c3e50' }}>📄 Novo Cadastro</h2>
+    <div style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '8px', border: '1px solid var(--border-color)', marginBottom: '20px' }}>
+      <h2 style={{ marginTop: 0, color: 'var(--header-text)' }}>📄 Novo Cadastro</h2>
 
       {/* --- BLOCO 1: DADOS DO DOCUMENTO --- */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '25px' }}>
         <div>
-          <label style={{ display: 'block', fontSize: '0.9em', fontWeight: 'bold' }}>Tipo Documento</label>
-          <select style={{ width: '100%', padding: '8px' }} value={tipoDoc} onChange={e => setTipoDoc(e.target.value)}>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.95em', fontWeight: 'bold' }}>Tipo Documento</label>
+          <select style={{ width: '100%', padding: '10px' }} value={tipoDoc} onChange={e => setTipoDoc(e.target.value)}>
             {tiposDocumento.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '0.9em', fontWeight: 'bold' }}>Número / ID</label>
-          <input type="text" style={{ width: '100%', padding: '8px' }} value={numero} onChange={e => setNumero(e.target.value)} placeholder="Ex: 2025/001" />
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.95em', fontWeight: 'bold' }}>Número / ID</label>
+          <input type="text" style={{ width: '100%', padding: '10px' }} value={numero} onChange={e => setNumero(e.target.value)} placeholder="Ex: 2025/001" />
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '30px', marginBottom: '25px' }}>
         <div>
-          <label style={{ display: 'block', fontSize: '0.9em', fontWeight: 'bold' }}>Fornecedor / Órgão</label>
-          <input type="text" style={{ width: '100%', padding: '8px' }} value={emissor} onChange={e => setEmissor(e.target.value)} />
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.95em', fontWeight: 'bold' }}>Cliente / Órgão</label>
+          <input type="text" style={{ width: '100%', padding: '10px' }} value={emissor} onChange={e => setEmissor(e.target.value)} />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '0.9em', fontWeight: 'bold' }}>Emissão</label>
-          <input type="date" style={{ width: '100%', padding: '8px' }} value={dataEmissao} onChange={e => setDataEmissao(e.target.value)} />
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.95em', fontWeight: 'bold' }}>Emissão</label>
+          <input type="date" style={{ width: '100%', padding: '10px' }} value={dataEmissao} onChange={e => setDataEmissao(e.target.value)} />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '0.9em', fontWeight: 'bold' }}>Chegada</label>
-          <input type="date" style={{ width: '100%', padding: '8px' }} value={dataChegada} onChange={e => setDataChegada(e.target.value)} />
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.95em', fontWeight: 'bold' }}>Chegada</label>
+          <input type="date" style={{ width: '100%', padding: '10px' }} value={dataChegada} onChange={e => setDataChegada(e.target.value)} />
         </div>
         <div>
-          <label style={{ display: 'block', fontSize: '0.9em', fontWeight: 'bold' }}>Validade</label>
-          <input type="date" style={{ width: '100%', padding: '8px' }} value={dataValidade} onChange={e => setDataValidade(e.target.value)} />
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.95em', fontWeight: 'bold' }}>Validade</label>
+          <input type="date" style={{ width: '100%', padding: '10px' }} value={dataValidade} onChange={e => setDataValidade(e.target.value)} />
         </div>
       </div>
 
-      <div style={{ background: '#e8f8f5', padding: '10px', borderRadius: '5px', marginBottom: '20px' }}>
-        <label style={{ display: 'block', fontSize: '0.9em', fontWeight: 'bold', color: '#16a085' }}>💰 Valor Teto (Total do Empenho)</label>
+      <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', fontSize: '0.9em', fontWeight: 'bold' }}>Arquivo do Documento (PDF/Imagem)</label>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <input 
+              type="file" 
+              accept=".pdf,.jpg,.png"
+              onChange={(e) => {
+                 // Electron specific: get path
+                 const file = e.target.files?.[0]
+                 if(file) {
+                    const path = 'path' in file ? (file as { path: string }).path : file.name
+                    setArquivo(path)
+                 }
+              }} 
+            />
+             {arquivo && <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)', alignSelf: 'center' }}>Caminho: {arquivo}</span>}
+          </div>
+      </div>
+
+      <div style={{ background: 'rgba(46, 204, 113, 0.1)', padding: '10px', borderRadius: '5px', marginBottom: '20px', border: '1px solid var(--success-color)' }}>
+        <label style={{ display: 'block', fontSize: '0.9em', fontWeight: 'bold', color: 'var(--success-color)' }}>💰 Valor Teto (Total do Empenho)</label>
         <input 
           type="number" step="0.01" 
-          style={{ width: '100%', padding: '8px', fontSize: '1.1em', fontWeight: 'bold', color: '#16a085' }} 
+          style={{ width: '100%', padding: '8px', fontSize: '1.1em', fontWeight: 'bold', color: 'var(--success-color)' }} 
           value={valorTeto} 
           onChange={e => setValorTeto(Number(e.target.value))} 
         />
       </div>
 
-      <hr style={{ border: '0', borderTop: '1px solid #eee', margin: '20px 0' }} />
+      <hr style={{ border: '0', borderTop: '1px solid var(--border-color)', margin: '20px 0' }} />
 
       {/* --- BLOCO 2: ITENS --- */}
       <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1em' }}>📦 Itens do Pedido</h3>
       
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 1fr 1fr 1fr auto', gap: '10px', alignItems: 'end', marginBottom: '10px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 0.5fr 1fr auto', gap: '15px', alignItems: 'end', marginBottom: '10px' }}>
         <div>
-          <label style={{ fontSize: '0.8em' }}>Descrição</label>
-          <input type="text" style={{ width: '100%', padding: '8px' }} value={descItem} onChange={e => setDescItem(e.target.value)} placeholder="Ex: Dipirona 500mg" />
+          <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.85em' }}>Descrição</label>
+          <input type="text" style={{ width: '100%', padding: '10px' }} value={descItem} onChange={e => setDescItem(e.target.value)} placeholder="Ex: Dipirona 500mg" />
         </div>
         <div>
-          <label style={{ fontSize: '0.8em' }}>Unidade</label>
-          <select style={{ width: '100%', padding: '8px' }} value={unidItem} onChange={e => setUnidItem(e.target.value)}>
+          <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.85em' }}>Categoria</label>
+          <select style={{ width: '100%', padding: '10px' }} value={catItem} onChange={e => setCatItem(e.target.value)}>
+            {categorias.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </div>
+        <div>
+           <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.85em' }}>Vol.</label>
+           <select style={{ width: '100%', padding: '10px' }} value={volItem} onChange={e => setVolItem(e.target.value)}>
+             <option value="">-</option>
+             {volumes.map(v => <option key={v} value={v}>{v}</option>)}
+           </select>
+        </div>
+        <div>
+          <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.85em' }}>Unidade</label>
+          <select style={{ width: '100%', padding: '10px' }} value={unidItem} onChange={e => setUnidItem(e.target.value)}>
             {Object.keys(apresentacoes).map(k => <option key={k} value={k}>{k}</option>)}
           </select>
         </div>
         <div>
-          <label style={{ fontSize: '0.8em' }}>Qtd.</label>
-          <input type="number" style={{ width: '100%', padding: '8px' }} value={qtdItem} onChange={e => setQtdItem(Number(e.target.value))} />
+          <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.85em' }}>Qtd.</label>
+          <input type="number" style={{ width: '100%', padding: '10px' }} value={qtdItem} onChange={e => setQtdItem(Number(e.target.value))} />
         </div>
         <div>
-          <label style={{ fontSize: '0.8em' }}>Valor Unit.</label>
-          <input type="number" step="0.01" style={{ width: '100%', padding: '8px' }} value={valorItem} onChange={e => setValorItem(Number(e.target.value))} />
+          <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.85em' }}>Valor Unit.</label>
+          <input type="number" step="0.01" style={{ width: '100%', padding: '10px' }} value={valorItem} onChange={e => setValorItem(Number(e.target.value))} />
         </div>
         <button 
           onClick={adicionarItem}
-          style={{ padding: '8px 15px', background: '#34495e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', height: '36px' }}
+          style={{ padding: '10px 20px', background: '#34495e', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', height: '42px', fontWeight: 'bold' }}
         >
-          + Add
+          +
         </button>
       </div>
 
       {/* Lista Prévia */}
-      <div style={{ background: '#f9f9f9', border: '1px solid #eee', borderRadius: '4px', padding: '10px', minHeight: '50px' }}>
-        {itens.length === 0 && <span style={{ color: '#aaa', fontStyle: 'italic' }}>Nenhum item adicionado...</span>}
+      <div style={{ background: 'var(--bg-body)', border: '1px solid var(--border-color)', borderRadius: '4px', padding: '10px', minHeight: '50px' }}>
+        {itens.length === 0 && <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic' }}>Nenhum item adicionado...</span>}
         <ul style={{ margin: 0, paddingLeft: '20px' }}>
           {itens.map((item, idx) => (
             <li key={idx} style={{ marginBottom: '5px' }}>
               <strong>{item.quantidade}</strong> {item.unidade} de {item.descricao} 
-              <span style={{ color: '#666', fontSize: '0.9em', marginLeft: '10px' }}>
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.9em', marginLeft: '10px' }}>
                 (Unit: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(item.valor_unitario)})
+                <br/>
+                <small>Cat: {item.categoria} | Vol: {item.volume}</small>
               </span>
             </li>
           ))}

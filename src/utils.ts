@@ -26,3 +26,31 @@ export const apresentacoes: Record<string, string> = {
   'KIT': 'Kit',
   'COM': 'Comprimido'
 };
+
+// Categorias de Itens
+export const categorias = [
+    'Material de Consumo',
+    'Material Hospitalar',
+    'Material Odontológico',
+    'Medicamentos',
+    'Material de Limpeza',
+    'Material de Expediente',
+    'Outros'
+];
+
+// Volumes / Embalagens
+export const volumes = [
+    'Caixa',
+    'Pacote',
+    'Fardo',
+    'Cartela',
+    'Unidade Solta'
+];
+
+// Motivos de Pendência / Não Fornecimento
+export const motivosPendencia = {
+    'FATOR_CAIXA': 'Incompatibilidade de Embalagem (Qtd não é múltiplo da embalagem/caixa)',
+    'FALTA_ESTOQUE': 'Falta no Nosso Estoque (Interno)',
+    'ENTREGA_PARCIAL': 'Entrega Parcial (Saldo Restante)',
+    'INVALIDADO': 'Item danificado ou inválido'
+};

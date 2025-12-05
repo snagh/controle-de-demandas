@@ -41,7 +41,31 @@ function App() {
 
   useEffect(() => {
     buscarNotas()
+    buscarNotas()
   }, [])
+
+  // --- THEME TOGGLE LOGIC ---
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
+
+  useEffect(() => {
+    // Apply theme to document root
+    const root = document.documentElement
+    if (theme === 'system') {
+      root.removeAttribute('data-theme')
+    } else {
+      root.setAttribute('data-theme', theme)
+    }
+  }, [theme])
+
+  function toggleTheme() {
+    setTheme(current => {
+       if (current === 'system') return 'light' // Start with light override
+       if (current === 'light') return 'dark'
+       return 'system'
+    })
+  }
+
+  const themeIcon = theme === 'system' ? '🌓' : theme === 'light' ? '☀️' : '🌙'
 
   // Lógica de Filtro (Busca Local)
   const notasFiltradas = notas.filter(nota => {
@@ -55,8 +79,15 @@ function App() {
   })
 
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px', fontFamily: 'Segoe UI, Arial, sans-serif', color: '#333' }}>
-      <h1 style={{ textAlign: 'center', color: '#2c3e50' }}>Gestão de Empenhos</h1>
+    <div style={{ width: '100%', maxWidth: '1600px', margin: '0 auto', padding: '40px', boxSizing: 'border-box', fontFamily: 'Inter, sans-serif', color: 'var(--text-primary)', position: 'relative' }}>
+      
+      <div style={{ position: 'absolute', top: '40px', right: '40px' }}>
+         <button onClick={toggleTheme} title="Alternar Tema (Auto/Claro/Escuro)" style={{ fontSize: '1.2em', padding: '10px' }}>
+            {themeIcon}
+         </button>
+      </div>
+
+      <h1 style={{ textAlign: 'center', color: 'var(--header-text)' }}>Gestão de Empenhos</h1>
 
       <CriarNota aoSalvar={buscarNotas} />
 
@@ -78,16 +109,16 @@ function App() {
 
       <hr style={{ margin: '30px 0', border: '0', borderTop: '1px solid #ccc' }} />
 
-      <h2 style={{ color: '#34495e' }}>📋 Documentos Lançados</h2>
+      <h2 style={{ color: 'var(--header-text)' }}>📋 Documentos Lançados</h2>
       
       {/* BARRA DE BUSCA */}
       <div style={{ marginBottom: '20px' }}>
         <input 
           type="text" 
-          placeholder="🔍 Buscar por NE, Fornecedor ou Status..." 
+          placeholder="🔍 Buscar por NE, Cliente ou Status..." 
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          style={{ width: '100%', padding: '12px', fontSize: '1.1em', borderRadius: '8px', border: '1px solid #ccc' }}
+          style={{ width: '100%', padding: '12px', fontSize: '1.1em', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--input-bg)', color: 'var(--text-primary)' }}
         />
       </div>
 
@@ -109,10 +140,10 @@ function App() {
             <div 
               key={nota.id} 
               style={{ 
-                border: '1px solid #ddd', 
+                border: '1px solid var(--border-color)', 
                 borderRadius: '8px', 
                 padding: '20px', 
-                background: nota.status_geral === 'REJEITADA' ? '#fff5f5' : '#fff',
+                background: nota.status_geral === 'REJEITADA' ? 'var(--bg-error-light)' : 'var(--bg-card)',
                 boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
               }}
             >
@@ -122,15 +153,15 @@ function App() {
                 style={{ cursor: 'pointer', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #eee', paddingBottom: '10px', marginBottom: '10px' }}
               >
                 <div>
-                  <span style={{ fontSize: '0.8em', color: '#7f8c8d', textTransform: 'uppercase', fontWeight: 'bold' }}>{nota.tipo_documento}</span>
-                  <h3 style={{ margin: '5px 0 0 0', color: '#2980b9' }}>#{nota.numero_ne}</h3>
-                  <small style={{ color: '#555' }}>Emissor: {nota.emissor}</small>
+                  <span style={{ fontSize: '0.8em', color: 'var(--text-secondary)', textTransform: 'uppercase', fontWeight: 'bold' }}>{nota.tipo_documento}</span>
+                  <h3 style={{ margin: '5px 0 0 0', color: 'var(--primary-color)' }}>#{nota.numero_ne}</h3>
+                  <small style={{ color: 'var(--text-secondary)' }}>Emissor: {nota.emissor}</small>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <span style={{ 
                     padding: '4px 8px', borderRadius: '4px', fontSize: '0.85em', fontWeight: 'bold',
-                    background: nota.status_geral === 'APROVADA' ? '#d5f5e3' : '#eaeded',
-                    color: nota.status_geral === 'APROVADA' ? '#196f3d' : '#333'
+                    background: nota.status_geral === 'APROVADA' ? 'var(--bg-success-light)' : 'var(--border-color)',
+                    color: nota.status_geral === 'APROVADA' ? 'var(--text-success)' : 'var(--text-primary)'
                   }}>
                     {nota.status_geral}
                   </span>
@@ -141,7 +172,7 @@ function App() {
               </div>
 
               {/* INFO FINANCEIRA */}
-              <div style={{ background: '#fcf3cf', padding: '8px 12px', borderRadius: '6px', fontSize: '0.9em', display: 'flex', gap: '20px', marginBottom: '15px' }}>
+              <div style={{ background: 'var(--bg-warning-light)', padding: '8px 12px', borderRadius: '6px', fontSize: '0.9em', display: 'flex', gap: '20px', marginBottom: '15px' }}>
                 <span><strong>Teto:</strong> {formatarMoeda(nota.valor_total_teto || 0)}</span>
                 <span><strong>Total Itens:</strong> {formatarMoeda(totalItens)}</span>
                 <span style={{ color: saldoFinanceiro < 0 ? 'red' : 'green' }}>
@@ -156,7 +187,7 @@ function App() {
                   {nota.itens?.map((item) => (
                     <li key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px', borderBottom: '1px solid #f4f4f4' }}>
                       <span>
-                        <span style={{ fontWeight: 'bold', color: '#2c3e50' }}>{item.quantidade} {item.unidade}</span> - {item.descricao}
+                        <span style={{ fontWeight: 'bold', color: 'var(--header-text)' }}>{item.quantidade} {item.unidade}</span> - {item.descricao}
                       </span>
                       <button 
                         onClick={(e) => {

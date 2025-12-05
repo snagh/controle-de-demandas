@@ -62,6 +62,9 @@ export type Database = {
           nota_id?: number | null
           quantidade?: number | null
           status_item?: string | null
+          categoria?: string | null
+          apresentacao?: string | null
+          volume?: string | null
           unidade?: string | null
           valor_unitario?: number | null
         }
@@ -110,6 +113,7 @@ export type Database = {
           data_recebimento?: string | null
           status_geral?: string | null
           tipo_documento?: string | null
+          arquivo_caminho?: string | null
           data_emissao?: string | null
           data_validade?: string | null
           valor_total_teto?: number | null
